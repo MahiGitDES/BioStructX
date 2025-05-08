@@ -8,7 +8,7 @@ from openai import OpenAI
 
 # --- Load Environment Variables ---
 load_dotenv()
-client = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 def load_protein_chat_page():
@@ -43,7 +43,7 @@ def load_protein_chat_page():
         with st.spinner("Thinking..."):
             try:
                 model_name = "gpt-4" if use_gpt4 else "gpt-3.5-turbo"
-                response = client.chat.completions.create(
+                response = openai.chat.completions.create(
                     model="gpt-4",
                     messages=[
                         {"role": "system", "content": "You are a helpful assistant specialized in protein bioinformatics and drug discovery."},
