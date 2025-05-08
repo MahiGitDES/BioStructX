@@ -16,7 +16,7 @@ if not api_key:
     st.error("❌ OPENAI_API_KEY not found. Make sure `.env` exists at project root.")
     st.stop()
 
-client = OpenAI(api_key=api_key)
+openai.api_key = api_key
 
 # --- Main UI ---
 def load_protein_chat_page():
@@ -52,7 +52,7 @@ def load_protein_chat_page():
             try:
                 model_name = "gpt-4" if use_gpt4 else "gpt-3.5-turbo"
 
-                response = client.chat.completions.create(
+                response = openai.chat.completions.create(
                     model=model_name,
                     messages=[
                         {"role": "system", "content": "You are a helpful assistant specialized in protein bioinformatics and drug discovery."},
