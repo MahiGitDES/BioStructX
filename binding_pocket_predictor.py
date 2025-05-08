@@ -1,14 +1,20 @@
 # src/binding_pocket_predictor.py
 
 import streamlit as st
-from rdkit import Chem
-from rdkit.Chem import Descriptors, Draw
+import requests
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 import numpy as np
 import joblib
-import requests
 import os
 import matplotlib.pyplot as plt
+
+# ✅ RDKit API Wrapper
+def get_rdkit_properties(smiles):
+    url = "https://rdkit-api.onrender.com/compute"  # Replace with your deployed RDKit API
+    response = requests.post(url, json={"smiles": smiles})
+    if response.status_code == 200:
+        return response.json()
+    return None
 
 def load_binding_pocket_predictor():
     st.title("🧪 Binding Pocket Predictor")
@@ -25,14 +31,14 @@ def load_binding_pocket_predictor():
     rf_model = joblib.load(model_path)
 
     def extract_ligand_features(smiles):
-        mol = Chem.MolFromSmiles(smiles)
-        if mol is None:
+        props = get_rdkit_properties(smiles)
+        if props is None or "error" in props:
             return None
         return [
-            Descriptors.MolWt(mol),
-            Descriptors.MolLogP(mol),
-            Descriptors.TPSA(mol),
-            Descriptors.NumRotatableBonds(mol)
+            props.get("MolWt", 0),
+            props.get("LogP", 0),
+            props.get("TPSA", 0),
+            props.get("NumRotatableBonds", 0)
         ]
 
     def extract_protein_features(sequence):
@@ -87,7 +93,6 @@ def load_binding_pocket_predictor():
 
     st.subheader("🧪 Ligand Input")
     ligand_input = st.text_input("Enter Ligand (SMILES or ChEMBL ID):")
-    ligand_file = st.file_uploader("Or upload ligand file (.mol or .sdf)", type=["mol", "sdf"])
 
     with st.expander("🧾 View Ligand Input Examples"):
         tab1, tab2 = st.tabs(["SMILES Format", "ChEMBL ID Format"])
@@ -99,14 +104,7 @@ def load_binding_pocket_predictor():
             st.caption("ChEMBL ID for Diazepam")
 
     smiles = None
-    if ligand_file:
-        try:
-            mol_block = ligand_file.read().decode("utf-8")
-            mol = Chem.MolFromMolBlock(mol_block)
-            smiles = Chem.MolToSmiles(mol) if mol else None
-        except:
-            st.error("❌ Failed to parse ligand file.")
-    elif ligand_input.upper().startswith("CHEMBL"):
+    if ligand_input.upper().startswith("CHEMBL"):
         smiles = get_smiles_from_chembl(ligand_input.upper())
         if smiles:
             st.success(f"🔗 SMILES from ChEMBL: `{smiles}`")
@@ -116,12 +114,7 @@ def load_binding_pocket_predictor():
         smiles = ligand_input.strip()
 
     if smiles:
-        mol = Chem.MolFromSmiles(smiles)
-        if mol:
-            st.subheader("🧬 Ligand Structure Preview")
-            st.image(Draw.MolToImage(mol, size=(300, 300)), caption="Structure generated from SMILES", use_column_width=False)
-        else:
-            st.warning("⚠️ Unable to render structure from SMILES.")
+        st.markdown(f"✅ Using SMILES: `{smiles}`")
 
     st.subheader("🧬 Protein Input")
     protein_input = st.text_area("Enter Protein Sequence (raw, FASTA, or UniProt ID):", height=150)
@@ -186,7 +179,7 @@ def load_binding_pocket_predictor():
             st.markdown("""---""")
             st.markdown("""
             ### 🔍 Features Used:
-            **Ligand (RDKit):**  
+            **Ligand (via RDKit API):**  
             - Molecular Weight  
             - LogP (lipophilicity)  
             - TPSA (polar surface area)  
@@ -200,6 +193,6 @@ def load_binding_pocket_predictor():
             - GRAVY (hydropathy)
             """)
 
-# Run directly
+# Run standalone
 if __name__ == "__main__":
     load_binding_pocket_predictor()
