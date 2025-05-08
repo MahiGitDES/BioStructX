@@ -16,8 +16,8 @@ if not api_key:
     st.error("❌ OPENAI_API_KEY not found. Make sure `.env` exists at project root.")
     st.stop()
 
-openai.api_key = api_key
-
+#openai.api_key = api_key
+openai.api_key = os.getenv("OPENAI_API_KEY")
 # --- Main UI ---
 def load_protein_chat_page():
     st.markdown("<h1 style='text-align: center; color: #2E86C1;'>💬 Protein Chat Assistant</h1>", unsafe_allow_html=True)
