@@ -17,7 +17,7 @@ if not api_key:
     st.error("❌ OPENAI_API_KEY not found. Please ensure .env file exists at project root.")
     st.stop()
 
-openai.api_key = api_key
+client = OpenAI(api_key=api_key)
 def load_protein_chat_page():
     st.markdown("<h1 style='text-align: center; color: #2E86C1;'>💬 Protein Chat Assistant</h1>", unsafe_allow_html=True)
     st.markdown("""
@@ -50,7 +50,7 @@ def load_protein_chat_page():
         with st.spinner("Thinking..."):
             try:
                 model_name = "gpt-4" if use_gpt4 else "gpt-3.5-turbo"
-                response = openai.chat.completions.create(
+                response = client.chat.completions.create(
                     model=model_name,
                     messages=[
                         {"role": "system", "content": "You are a helpful assistant specialized in protein bioinformatics and drug discovery."},
