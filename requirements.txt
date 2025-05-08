@@ -12,3 +12,6 @@ joblib==1.4.2
 numpy==1.26.4
 matplotlib==3.9.0
 rdkit-pypi==2022.9.5
+Flask
+rdkit-pypi
+gunicorn
