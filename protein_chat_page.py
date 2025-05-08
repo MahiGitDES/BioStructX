@@ -6,8 +6,9 @@ import os
 from dotenv import load_dotenv
 
 # --- Load Environment Variables ---
-env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
+env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
 load_dotenv(dotenv_path=env_path)
+st.write("cwd",os.getcwd())
 st.write("Looking for .env at:", env_path)
 st.write("Does file exist?", os.path.exists(env_path))
 
