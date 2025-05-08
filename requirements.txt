@@ -14,7 +14,7 @@ biopython==1.83
 py3Dmol==2.0.1
 python-dotenv==1.0.1
 
-openai==0.28
+openai==1.25.2
 langchain==0.2.1
 langchain-community==0.2.1
 langchain-core==0.2.1
