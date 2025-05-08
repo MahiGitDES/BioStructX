@@ -175,11 +175,17 @@ if st.session_state.selected_module != "Home":
 # --- Home Page Cards ---
 about_tab, team_tab = st.columns(2)
 with about_tab:
-    if st.button("📘 About BioStructX"):
-        st.switch_page("pages/about_page_biostructx.py")
+    with st.expander("📘 About BioStructX"):
+        with open("About.py", "r") as file:
+            code = file.read()
+            exec(code, globals())
+
 with team_tab:
-    if st.button("👥 Meet the Team"):
-        st.switch_page("pages/team_page_biostructx.py")
+    with st.expander("👥 Meet the Team"):
+        with open("team_page_biostructx.py", "r") as file:
+            code = file.read()
+            exec(code, globals())
+
 
 modules = [
     {"name": "Binding Affinity Predictor", "desc": "Predict binding affinity using ML models.", "fn": "binding_affinity"},

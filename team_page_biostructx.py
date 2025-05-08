@@ -1,8 +1,5 @@
 import streamlit as st
 
-# --- Page Config ---
-st.set_page_config(page_title="Team | BioStructX", page_icon="👥", layout="wide")
-
 # --- Main Heading ---
 st.markdown("""
     <h1 style='text-align: center; color: #154360;'>👥 Meet the BioStructX Team</h1>
@@ -13,10 +10,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- Sidebar Image (Optional Local) ---
-try:
-    st.sidebar.image("C:/Users/hp/OneDrive/Desktop/BioStructX/your_photo.jpg", caption="Mahesh Tamhane", width=160)
-except:
-    st.sidebar.warning("Add your photo to sidebar by replacing the placeholder path.")
+#try:
+#    st.sidebar.image("C:/Users/hp/OneDrive/Desktop/BioStructX/your_photo.jpg", caption="Mahesh Tamhane", width=160)
+#except:
+#    st.sidebar.warning("Add your photo to sidebar by replacing the placeholder path.")
 
 # --- Section 1: Creator Info ---
 st.markdown("""
@@ -55,4 +52,3 @@ Let's build smarter, accessible, and impactful tools for structural biology.
 Built with ❤️ by the BioStructX Team.
 </p>
 """, unsafe_allow_html=True)
-s
