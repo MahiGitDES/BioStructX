@@ -10,7 +10,6 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def load_protein_chat_page():
-    st.set_page_config(page_title="Protein Chat Assistant", page_icon="💬", layout="wide")
 
     st.markdown("<h1 style='text-align: center; color: #2E86C1;'>💬 Protein Chat Assistant</h1>", unsafe_allow_html=True)
     st.markdown("""
