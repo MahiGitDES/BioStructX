@@ -6,8 +6,15 @@ import os
 from dotenv import load_dotenv
 
 # --- Load Environment Variables ---
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
+load_dotenv(dotenv_path=env_path)
+
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    st.error("❌ OPENAI_API_KEY not found. Please ensure .env file exists at project root.")
+    st.stop()
+
+openai.api_key = api_key
 
 def load_protein_chat_page():
 
