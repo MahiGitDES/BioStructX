@@ -229,6 +229,14 @@ def load_evolutionary_module():
 
             avg_rmsd = np.nanmean(rmsd_matrix[np.triu_indices_from(rmsd_matrix, k=1)])
             st.success(f"✅ Average RMSD across structures: **{avg_rmsd:.3f} Å**")
+            
+    st.markdown("""
+        <div class='nav-buttons'>
+              <a href="/" target="_self">
+              <button style="padding: 10px 20px; border-radius: 8px; background-color: #2980B9; color: white; border: none;">🔙 Back to Home</button>
+              </a>
+       </div>
+    """, unsafe_allow_html=True)
 
 
 # Entry point

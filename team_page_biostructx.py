@@ -1,4 +1,5 @@
 import streamlit as st
+from PIL import Image
 
 # --- Main Heading ---
 st.markdown("""
@@ -18,11 +19,16 @@ st.markdown("""
 # --- Section 1: Creator Info ---
 st.markdown("""
 ### 🧑‍🔬 Project Lead
+""")
 
+img = Image.open("images/mahesh_tamhane.jpg").convert("RGB")
+st.image(img, width=200)
+
+st.markdown("""
 **Mahesh Tamhane**  
 *M.Sc. Bioinformatics, DES Pune University*  
 Email: [maheshtamhane1214@gmail.com](mailto:maheshtamhane1214@gmail.com)  
-GitHub: [github.com/yourusername](https://github.com/yourusername)
+GitHub: [https://github.com/MahiGitDES](https://github.com/MahiGitDES)
 
 Mahesh leads the development and architecture of BioStructX with a vision to combine AI, structural bioinformatics, and modular workflows into a unified research platform. He is deeply invested in drug discovery, protein modeling, and web tool engineering.
 """)
@@ -32,7 +38,7 @@ st.markdown("""
 ### 🧑‍🏫 Mentorship & Acknowledgements
 
 Special thanks to:
-- **Dr. [Mentor Name Here]**, Assistant Professor, Department of Life Sciences, DES Pune University
+- **Dr. Kushagra Kashyap**, Assistant Professor, Department of Life Sciences, DES Pune University
 - All faculty and peers who provided constructive feedback during development
 
 Your encouragement and guidance were instrumental in refining BioStructX.
@@ -45,7 +51,7 @@ st.markdown("""
 We welcome researchers, coders, and domain experts to join the BioStructX journey.  
 Let's build smarter, accessible, and impactful tools for structural biology.
 
-💬 Contact via [GitHub Discussions](https://github.com/yourusername/BioStructX/discussions) or [LinkedIn](https://linkedin.com/in/your-link).
+💬 Contact via [LinkedIn](https://www.linkedin.com/in/mahesht120598).
 
 ---
 <p style='text-align: center;'>

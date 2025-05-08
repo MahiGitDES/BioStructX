@@ -21,6 +21,14 @@ def load_chembl_browser():
             st.markdown(f"**ChEMBL URL:** [Open in ChEMBL](https://www.ebi.ac.uk/chembl/compound_report_card/{chembl_id})")
         else:
             st.error("❌ ChEMBL ID not found. Please check the ID.")
+    
+    st.markdown("""
+        <div class='nav-buttons'>
+              <a href="/" target="_self">
+              <button style="padding: 10px 20px; border-radius: 8px; background-color: #2980B9; color: white; border: none;">🔙 Back to Home</button>
+              </a>
+       </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     st.set_page_config(page_title="ChEMBL Browser", page_icon="💊", layout="wide")

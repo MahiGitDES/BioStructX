@@ -14,6 +14,14 @@ def load_drug_gene_mapper():
     """)
 
     user_input = st.text_input("🔍 Enter a Drug or Gene Name:")
+    
+    st.markdown("""
+        <div class='nav-buttons'>
+              <a href="/" target="_self">
+              <button style="padding: 10px 20px; border-radius: 8px; background-color: #2980B9; color: white; border: none;">🔙 Back to Home</button>
+              </a>
+           </div>
+        """, unsafe_allow_html=True)
 
     def get_pubchem_properties(name):
         try:

@@ -62,13 +62,5 @@ st.markdown("""
       <li>🧱 Drag-and-drop workflow composition</li>
       <li>🧠 AI assistant for suggesting next tools</li>
    </ul>
-   <div class='nav-buttons'>
-      <a href="/" target="_self">
-      <button style="padding: 10px 20px; border-radius: 8px; background-color: #2980B9; color: white; border: none;">🔙 Back to Home</button>
-      </a>
-      <a href="https://github.com/YourGitHubUsername" target="_blank">
-      <button style="padding: 10px 20px; border-radius: 8px; background-color: #2C3E50; color: white; border: none;">🌐 Visit GitHub</button>
-      </a>
-   </div>
 </div>
 """, unsafe_allow_html=True)

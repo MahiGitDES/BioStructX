@@ -183,6 +183,14 @@ def load_binding_affinity_predictor():
             **Protein (Biopython):**  
             - MolWt, Aromaticity, Instability Index, pI, GRAVY
             """)
+    
+    st.markdown("""
+        <div class='nav-buttons'>
+              <a href="/" target="_self">
+              <button style="padding: 10px 20px; border-radius: 8px; background-color: #2980B9; color: white; border: none;">🔙 Back to Home</button>
+              </a>
+       </div>
+    """, unsafe_allow_html=True)
 
 # Run directly
 if __name__ == "__main__":

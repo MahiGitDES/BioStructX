@@ -111,6 +111,14 @@ def load_protein_characterization():
                     st.markdown(f"- **{go_id}** → *(Name unavailable)*")
         else:
             st.warning("⚠️ No GO terms found for this UniProt ID.")
+    
+    st.markdown("""
+        <div class='nav-buttons'>
+              <a href="/" target="_self">
+              <button style="padding: 10px 20px; border-radius: 8px; background-color: #2980B9; color: white; border: none;">🔙 Back to Home</button>
+              </a>
+           </div>
+        """, unsafe_allow_html=True)
 
 # Optional: Allow standalone execution
 if __name__ == "__main__":

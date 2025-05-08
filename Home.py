@@ -6,6 +6,17 @@ import random
 import requests
 from streamlit_lottie import st_lottie
 
+from protein_chat_page import load_protein_chat_page
+
+import base64
+
+# Convert PDF to base64
+
+with open("static/BioStructX_Module_UserGuide.pdf", "rb") as f:
+    pdf_data = f.read()
+pdf_base64 = base64.b64encode(pdf_data).decode("utf-8")
+pdf_download_link = f"data:application/pdf;base64,{pdf_base64}"
+
 # --- Page Configuration ---
 st.set_page_config(page_title="BioStructX", page_icon="🧬", layout="wide")
 
@@ -57,6 +68,7 @@ border_color = "#2E86C1" if not dark else "#30363d"
 card_text = "#4B4B4B" if not dark else "#d0d6db"
 footer_color = "gray" if not dark else "#8b949e"
 
+    
 # --- Styling ---
 st.markdown(f"""
     <style>
@@ -110,16 +122,27 @@ st.markdown(f"""
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 999;
         }}
+        .download-link {{
+            background-color: #28a745;
+            color: white !important;
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }}
+        .download-link:hover {{
+            background-color: #218838;
+        }}
     </style>
     <div class="nav-container">
         <div class="nav-title">🧬 BioStructX</div>
         <div class="nav-links">
-            <a href="/">Home</a>
-            <a href="https://github.com/your-username/BioStructX" target="_blank">GitHub</a>
-            <a href="mailto:support@biostructx.org">Help</a>
+            <a href="/" target="_self">Home</a>
+            <a href="https://github.com/MahiGitDES/BioStructX" target="_blank">GitHub</a>
+            <a href="{pdf_download_link}" download="/static/BioStructX_Module_UserGuide.pdf" >Download Guide</a>
         </div>
     </div>
-    <a class='floating-btn' href="mailto:support@biostructx.org'>💬 Need Help?</a>
+    <a class='floating-btn' href="mailto:3522411039@despu.edu.in'>💬 Need Help?</a>
 """, unsafe_allow_html=True)
 
 # --- Title & Subtitle ---

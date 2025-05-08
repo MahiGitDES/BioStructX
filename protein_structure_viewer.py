@@ -30,6 +30,7 @@ def load_protein_structure_viewer():
     user_input = st.text_area("Enter Input:", height=150)
     uploaded_pdb = st.file_uploader("📂 Or upload your own PDB file", type=["pdb"])
 
+
     def fetch_structure_from_pdb(pdb_id):
         url = f"https://files.rcsb.org/view/{pdb_id.lower()}.pdb"
         r = requests.get(url)
@@ -122,4 +123,12 @@ def load_protein_structure_viewer():
                     st.info("No domain annotation tags found in the structure.")
             else:
                 st.error("❌ Could not retrieve or interpret structure for the given input.")
+                
+    st.markdown("""
+        <div class='nav-buttons'>
+              <a href="/" target="_self">
+              <button style="padding: 10px 20px; border-radius: 8px; background-color: #2980B9; color: white; border: none;">🔙 Back to Home</button>
+              </a>
+       </div>
+    """, unsafe_allow_html=True)
 

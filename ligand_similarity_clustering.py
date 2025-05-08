@@ -13,7 +13,6 @@ from io import StringIO
 RDKit_API_URL = "https://rdkit-api.onrender.com/fingerprint"
 
 def load_ligand_similarity_clustering():
-    st.set_page_config(page_title="🔗 Ligand Similarity Clustering", layout="wide")
     st.title("🔗 Ligand Similarity Clustering & Visualization")
 
     st.markdown("""
@@ -112,6 +111,14 @@ def load_ligand_similarity_clustering():
 - Ligands in the **same cluster** share structural similarity.
 - **PC1 & PC2** are principal components showing chemical variation.
 """)
+
+    st.markdown("""
+        <div class='nav-buttons'>
+              <a href="/" target="_self">
+              <button style="padding: 10px 20px; border-radius: 8px; background-color: #2980B9; color: white; border: none;">🔙 Back to Home</button>
+              </a>
+       </div>
+    """, unsafe_allow_html=True)
 
 # Standalone run
 if __name__ == "__main__":

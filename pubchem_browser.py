@@ -20,6 +20,14 @@ def load_pubchem_browser():
             st.markdown(f"**Molecular Weight:** {props.get('MolecularWeight', 'N/A')}")
         else:
             st.error("❌ Compound not found. Please check the CID.")
+    
+    st.markdown("""
+        <div class='nav-buttons'>
+              <a href="/" target="_self">
+              <button style="padding: 10px 20px; border-radius: 8px; background-color: #2980B9; color: white; border: none;">🔙 Back to Home</button>
+              </a>
+           </div>
+        """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     st.set_page_config(page_title="PubChem Browser", page_icon="🧪", layout="wide")
