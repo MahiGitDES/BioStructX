@@ -4,14 +4,14 @@ import streamlit as st
 import openai
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
 
 # --- Load Environment Variables ---
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-
 def load_protein_chat_page():
+    st.set_page_config(page_title="Protein Chat Assistant", page_icon="💬", layout="wide")
+
     st.markdown("<h1 style='text-align: center; color: #2E86C1;'>💬 Protein Chat Assistant</h1>", unsafe_allow_html=True)
     st.markdown("""
         <p style='text-align: center; color: gray;'>
@@ -44,11 +44,13 @@ def load_protein_chat_page():
             try:
                 model_name = "gpt-4" if use_gpt4 else "gpt-3.5-turbo"
                 response = openai.chat.completions.create(
-                    model="gpt-4",
+                    model=model_name,
                     messages=[
                         {"role": "system", "content": "You are a helpful assistant specialized in protein bioinformatics and drug discovery."},
                         {"role": "user", "content": query.strip()}
-                    ]
+                    ],
+                    temperature=temp,
+                    max_tokens=max_tokens
                 )
                 answer = response.choices[0].message.content
                 st.markdown("### 🧠 AI Answer")
@@ -57,8 +59,6 @@ def load_protein_chat_page():
             except Exception as e:
                 st.error(f"❌ Error generating response: {e}")
 
-
 # --- Entry Point for Standalone Use ---
 if __name__ == "__main__":
-    st.set_page_config(page_title="Protein Chat Assistant", page_icon="💬", layout="wide")
     load_protein_chat_page()
