@@ -4,10 +4,11 @@ import streamlit as st
 import openai
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # --- Load Environment Variables ---
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key="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")
 
 
 def load_protein_chat_page():
@@ -42,16 +43,14 @@ def load_protein_chat_page():
         with st.spinner("Thinking..."):
             try:
                 model_name = "gpt-4" if use_gpt4 else "gpt-3.5-turbo"
-                response = openai.ChatCompletion.create(
-                    model=model_name,
+                response = client.chat.completions.create(
+                    model="gpt-4",
                     messages=[
                         {"role": "system", "content": "You are a helpful assistant specialized in protein bioinformatics and drug discovery."},
                         {"role": "user", "content": query.strip()}
-                    ],
-                    temperature=temp,
-                    max_tokens=max_tokens
+                    ]
                 )
-                answer = response["choices"][0]["message"]["content"]
+                answer = response.choices[0].message.content
                 st.markdown("### 🧠 AI Answer")
                 st.success(answer)
 
