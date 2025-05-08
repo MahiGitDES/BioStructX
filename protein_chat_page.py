@@ -2,9 +2,6 @@
 
 import streamlit as st
 
-# --- Must be the first Streamlit command ---
-st.set_page_config(page_title="Protein Chat Assistant", page_icon="💬", layout="wide")
-
 import openai
 import os
 from dotenv import load_dotenv
