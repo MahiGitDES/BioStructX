@@ -35,7 +35,7 @@ def load_protein_chat_page():
 
     # --- Advanced Options ---
     with st.expander("⚙️ Advanced Settings"):
-        use_gpt4 = st.checkbox("Use GPT-4 model", value=False)
+        #use_gpt4 = st.checkbox("Use GPT-4 model", value=False)
         temp = st.slider("🎛️ Temperature (creativity)", 0.0, 1.0, 0.7)
         max_tokens = st.slider("📏 Max Tokens", 100, 2048, 512)
 
