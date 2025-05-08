@@ -7,13 +7,10 @@ import requests
 from sklearn.decomposition import PCA
 from sklearn.cluster import AgglomerativeClustering
 import matplotlib.pyplot as plt
-from io import BytesIO
-from PIL import Image
-from rdkit import Chem
-from rdkit.Chem import Draw  # Safe to keep just for images (optional)
+from io import StringIO
 
-# RDKit API URL
-RDKit_API_URL = "https://rdkit-api.onrender.com/fingerprint"  # Replace with your Render app
+# RDKit API endpoint (replace if changed)
+RDKit_API_URL = "https://rdkit-api.onrender.com/fingerprint"
 
 def load_ligand_similarity_clustering():
     st.set_page_config(page_title="🔗 Ligand Similarity Clustering", layout="wide")
@@ -48,13 +45,6 @@ def load_ligand_similarity_clustering():
         if r.status_code == 200:
             data = r.json()
             return data.get("molecule_structures", {}).get("canonical_smiles")
-        return None
-
-    def mol_image(smiles):
-        mol = Chem.MolFromSmiles(smiles)
-        if mol:
-            img = Draw.MolToImage(mol, size=(150, 150))
-            return img
         return None
 
     with tab1:
@@ -92,7 +82,6 @@ def load_ligand_similarity_clustering():
             pca = PCA(n_components=2)
             X_pca = pca.fit_transform(X)
 
-            # --- Plot ---
             fig, ax = plt.subplots(figsize=(8, 6))
             scatter = ax.scatter(X_pca[:, 0], X_pca[:, 1], c=labels, cmap="tab10", s=100, alpha=0.8)
             for i, smi in enumerate(valid_smiles):
@@ -114,19 +103,9 @@ def load_ligand_similarity_clustering():
                 df = df[df["Cluster"].isin(cluster_filter)]
             st.dataframe(df)
 
-            st.markdown("### 🖼️ Molecule Structures")
-            for smi in df["SMILES"]:
-                img = mol_image(smi)
-                if img:
-                    buf = BytesIO()
-                    img.save(buf, format="PNG")
-                    st.image(Image.open(buf), caption=smi, width=150)
-
-            # Download
             csv = df.to_csv(index=False)
             st.download_button("📥 Download Results CSV", csv, "ligand_clusters.csv", "text/csv")
 
-            # Result Summary
             st.markdown("### 📊 Result Analysis")
             st.info(f"""
 - **{len(set(labels))} clusters** identified from {len(valid_smiles)} ligands.
