@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 # --- Load Environment Variables ---
 env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".env"))
 load_dotenv(dotenv_path=env_path)
-st.write("cwd",os.getcwd())
-st.write("Looking for .env at:", env_path)
-st.write("Does file exist?", os.path.exists(env_path))
+#st.write("cwd",os.getcwd())
+#st.write("Looking for .env at:", env_path)
+#st.write("Does file exist?", os.path.exists(env_path))
 
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
@@ -18,9 +18,7 @@ if not api_key:
     st.stop()
 
 openai.api_key = api_key
-
 def load_protein_chat_page():
-
     st.markdown("<h1 style='text-align: center; color: #2E86C1;'>💬 Protein Chat Assistant</h1>", unsafe_allow_html=True)
     st.markdown("""
         <p style='text-align: center; color: gray;'>
@@ -29,14 +27,14 @@ def load_protein_chat_page():
     """, unsafe_allow_html=True)
     st.markdown("<hr>", unsafe_allow_html=True)
 
-    # --- Query Input ---
+    # --- Input ---
     query = st.text_area("🧬 Enter your protein/drug-related research question:", height=150)
 
     # --- Settings ---
     with st.expander("⚙️ Advanced Settings"):
         use_gpt4 = st.checkbox("Use GPT-4 model", value=False)
-        temp = st.slider("🎛️ Temperature (creativity)", min_value=0.0, max_value=1.0, value=0.7)
-        max_tokens = st.slider("📏 Max Tokens", min_value=100, max_value=2048, value=512)
+        temp = st.slider("🎛️ Temperature (creativity)", 0.0, 1.0, 0.7)
+        max_tokens = st.slider("📏 Max Tokens", 100, 2048, 512)
 
     # --- Example Prompts ---
     with st.expander("💡 Example Prompts"):
@@ -47,7 +45,7 @@ def load_protein_chat_page():
         - Which UniProt tools help in protein function prediction?  
         """)
 
-    # --- Run Query ---
+    # --- Query Execution ---
     if st.button("💡 Ask AI") and query.strip():
         with st.spinner("Thinking..."):
             try:
@@ -68,6 +66,6 @@ def load_protein_chat_page():
             except Exception as e:
                 st.error(f"❌ Error generating response: {e}")
 
-# --- Entry Point for Standalone Use ---
+# --- Standalone use ---
 if __name__ == "__main__":
     load_protein_chat_page()
