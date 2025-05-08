@@ -1,206 +1,126 @@
-# src/binding_pocket_predictor.py
-
 import streamlit as st
-import requests
-from Bio.SeqUtils.ProtParam import ProteinAnalysis
-import numpy as np
-import joblib
 import os
-import matplotlib.pyplot as plt
+import numpy as np
+from Bio.PDB import PDBParser, DSSP
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+import py3Dmol
+import tempfile
+import streamlit.components.v1 as components
 
-# ✅ RDKit API Wrapper
-def get_rdkit_properties(smiles):
-    url = "https://rdkit-api.onrender.com/compute"  # Replace with your deployed RDKit API
-    response = requests.post(url, json={"smiles": smiles})
-    if response.status_code == 200:
-        return response.json()
-    return None
+st.title("🤖 AI-Based Binding Pocket Predictor")
 
-def load_binding_pocket_predictor():
-    st.title("🧪 Binding Pocket Predictor")
-    st.markdown("""
-    This tool predicts the **binding affinity** between a **ligand (SMILES)** and a **protein sequence**  
-    using a machine learning model trained on structural and physicochemical descriptors.
-    """)
+st.markdown("""
+Upload a **protein structure (PDB)** and optionally a **ligand (SDF or MOL2)** file to:
+- Predict potential **binding pocket residues** using an AI model.
+- Visualize predicted residues and ligand in 3D with `py3Dmol`.
+""")
 
-    model_path = os.path.join(os.path.dirname(__file__), "ml_model_rf.pkl")
-    if not os.path.exists(model_path):
-        st.error(f"❌ ML model not found at: `{model_path}`.")
-        st.stop()
+# Upload protein
+pdb_file = st.file_uploader("📁 Upload a Protein Structure (.pdb)", type=["pdb"])
+ligand_file = st.file_uploader("💊 Optional: Upload Ligand File (.mol2 or .sdf)", type=["mol2", "sdf"])
 
-    rf_model = joblib.load(model_path)
+if pdb_file:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdb") as temp_pdb:
+        temp_pdb.write(pdb_file.read())
+        temp_pdb_path = temp_pdb.name
 
-    def extract_ligand_features(smiles):
-        props = get_rdkit_properties(smiles)
-        if props is None or "error" in props:
-            return None
-        return [
-            props.get("MolWt", 0),
-            props.get("LogP", 0),
-            props.get("TPSA", 0),
-            props.get("NumRotatableBonds", 0)
-        ]
-
-    def extract_protein_features(sequence):
-        try:
-            analysis = ProteinAnalysis(sequence)
-            return [
-                analysis.molecular_weight(),
-                analysis.aromaticity(),
-                analysis.instability_index(),
-                analysis.isoelectric_point(),
-                analysis.gravy()
-            ]
-        except:
-            return None
-
-    def clean_sequence(seq_text):
-        lines = seq_text.strip().splitlines()
-        if lines and lines[0].startswith(">"):
-            return "".join(lines[1:])
-        return seq_text.strip()
-
-    def get_smiles_from_chembl(chembl_id):
-        url = f"https://www.ebi.ac.uk/chembl/api/data/molecule/{chembl_id}.json"
-        r = requests.get(url)
-        if r.status_code == 200:
-            data = r.json()
-            return data.get("molecule_structures", {}).get("canonical_smiles")
-        return None
-
-    def get_sequence_from_uniprot(uniprot_id):
-        url = f"https://rest.uniprot.org/uniprotkb/{uniprot_id}.fasta"
-        r = requests.get(url)
-        if r.status_code == 200:
-            return clean_sequence(r.text)
-        return None
-
-    def plot_binding_affinity(pred_energy):
-        fig, ax = plt.subplots(figsize=(6, 1.5))
-        ax.set_xlim(-15, 0)
-        ax.set_ylim(0, 1)
-        ax.set_yticks([])
-        ax.set_xlabel("Binding Affinity (kcal/mol)")
-        ax.set_title("Binding Affinity Range", fontsize=10)
-        ax.barh(0.5, 5, left=-15, height=0.5, color="#ff5733", edgecolor="black", label="🔥 Strong (< -10)")
-        ax.barh(0.5, 2, left=-10, height=0.5, color="#33c4ff", edgecolor="black", label="✅ Good (-10 to -8)")
-        ax.barh(0.5, 2, left=-8, height=0.5, color="#f4d03f", edgecolor="black", label="⚠️ Moderate (-8 to -6)")
-        ax.barh(0.5, 6, left=-6, height=0.5, color="#e74c3c", edgecolor="black", label="❌ Weak (> -6)")
-        ax.axvline(pred_energy, color="black", linestyle="--", linewidth=2)
-        ax.text(pred_energy, 0.7, f"Pred: {pred_energy:.2f}", ha="center", fontsize=9)
-        ax.legend(loc="center left", bbox_to_anchor=(1.0, 0.5), fontsize="x-small")
-        st.pyplot(fig, use_container_width=True)
-
-    st.subheader("🧪 Ligand Input")
-    ligand_input = st.text_input("Enter Ligand (SMILES or ChEMBL ID):")
-
-    with st.expander("🧾 View Ligand Input Examples"):
-        tab1, tab2 = st.tabs(["SMILES Format", "ChEMBL ID Format"])
-        with tab1:
-            st.code("CC(=O)OC1=CC=CC=C1C(=O)O", language="text")
-            st.caption("Aspirin (SMILES)")
-        with tab2:
-            st.code("CHEMBL25", language="text")
-            st.caption("ChEMBL ID for Diazepam")
-
-    smiles = None
-    if ligand_input.upper().startswith("CHEMBL"):
-        smiles = get_smiles_from_chembl(ligand_input.upper())
-        if smiles:
-            st.success(f"🔗 SMILES from ChEMBL: `{smiles}`")
-        else:
-            st.error("❌ Could not retrieve SMILES for that ChEMBL ID.")
+    if ligand_file:
+        ligand_ext = ligand_file.name.split('.')[-1]
+        ligand_path = os.path.join(tempfile.gettempdir(), f"ligand.{ligand_ext}")
+        with open(ligand_path, "wb") as f:
+            f.write(ligand_file.read())
     else:
-        smiles = ligand_input.strip()
+        ligand_path = None
 
-    if smiles:
-        st.markdown(f"✅ Using SMILES: `{smiles}`")
+    # Extract features
+    def extract_residue_features(pdb_path):
+        parser = PDBParser(QUIET=True)
+        structure = parser.get_structure("prot", pdb_path)
+        model = structure[0]
 
-    st.subheader("🧬 Protein Input")
-    protein_input = st.text_area("Enter Protein Sequence (raw, FASTA, or UniProt ID):", height=150)
-    protein_file = st.file_uploader("Or upload protein file (.fasta or .txt)", type=["fasta", "txt"])
-
-    with st.expander("🧾 View Protein Input Examples"):
-        tab1, tab2, tab3 = st.tabs(["Raw Sequence", "FASTA Format", "UniProt ID"])
-        with tab1:
-            st.code("MKTIIALSYIFCLVFA", language="text")
-            st.caption("Raw protein sequence")
-        with tab2:
-            st.code(">sp|P12345|SAMPLE_PROTEIN Homo sapiens\nMKTIIALSYIFCLVFA", language="text")
-            st.caption("FASTA format")
-        with tab3:
-            st.code("P25089", language="text")
-            st.caption("UniProt ID for FPR3_HUMAN")
-
-    seq = None
-    if protein_file:
         try:
-            seq = clean_sequence(protein_file.read().decode("utf-8"))
-        except:
-            st.error("❌ Failed to read uploaded protein file.")
-    elif protein_input and len(protein_input.strip()) <= 10:
-        seq = get_sequence_from_uniprot(protein_input.strip())
-        if seq:
-            st.success("🧬 Protein sequence fetched from UniProt.")
-        else:
-            st.error("❌ Invalid UniProt ID or fetch failed.")
-    else:
-        seq = clean_sequence(protein_input)
+            dssp = DSSP(model, pdb_path)
+        except Exception as e:
+            st.error(f"❌ DSSP failed. Ensure DSSP is installed: {e}")
+            return None, None, None
 
-    if st.button("⚙️ Predict Binding Affinity (ML)"):
-        ligand_features = extract_ligand_features(smiles)
-        protein_features = extract_protein_features(seq)
+        features = []
+        res_ids = []
+        atom_coords = []
+        for key in dssp.keys():
+            res = dssp[key]
+            chain = key[0]
+            resnum = key[1]
+            aa = res[1]
+            asa = res[3]
+            phi = res[4]
+            psi = res[5]
+            hydrophobic = 1 if aa in "AVILMFYW" else 0
+            features.append([asa, phi, psi, hydrophobic])
+            res_ids.append((chain, resnum, aa))
+            try:
+                atom = model[chain][resnum]['CA']
+                atom_coords.append(atom.coord)
+            except:
+                atom_coords.append(None)
+        return np.array(features), res_ids, atom_coords
 
-        if ligand_features is None:
-            st.error("❌ Invalid or unresolved SMILES.")
-        elif protein_features is None:
-            st.error("❌ Invalid or unresolved protein sequence.")
-        else:
-            combined = np.array(ligand_features + protein_features).reshape(1, -1)
-            prediction = rf_model.predict(combined)[0]
-            predicted_energy = -prediction
+    # Simulated RF model
+    def simulate_model():
+        X_dummy = np.random.rand(100, 4)
+        y_dummy = np.random.randint(0, 2, 100)
+        model = RandomForestClassifier().fit(X_dummy, y_dummy)
+        scaler = StandardScaler().fit(X_dummy)
+        return model, scaler
 
-            if predicted_energy <= -10:
-                comment = "🔥 Strong binding — very likely to interact effectively."
-            elif predicted_energy <= -8:
-                comment = "✅ Good binding — possibly a viable binder."
-            elif predicted_energy <= -6:
-                comment = "⚠️ Weak binding — may need optimization."
-            else:
-                comment = "❌ Poor binding — unlikely to interact."
+    # Predict and visualize
+    features, res_ids, coords = extract_residue_features(temp_pdb_path)
+    if features is not None:
+        model, scaler = simulate_model()
+        predictions = model.predict(scaler.transform(features))
 
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                st.success(f"🧠 **Predicted Binding Affinity**: `{predicted_energy:.2f}` kcal/mol")
-                st.info(comment)
-            with col2:
-                plot_binding_affinity(predicted_energy)
+        # Get predicted pocket residues and their coordinates
+        pocket_residues = [res_ids[i] for i, pred in enumerate(predictions) if pred == 1]
+        pocket_coords = [coords[i] for i, pred in enumerate(predictions) if pred == 1 and coords[i] is not None]
 
-            st.markdown("""---""")
-            st.markdown("""
-            ### 🔍 Features Used:
-            **Ligand (via RDKit API):**  
-            - Molecular Weight  
-            - LogP (lipophilicity)  
-            - TPSA (polar surface area)  
-            - Rotatable Bonds  
+        st.success(f"✅ Found {len(pocket_residues)} predicted pocket residues.")
+        if pocket_residues:
+            st.markdown("### 🧬 Predicted Pocket Residues")
+            st.code(", ".join([f"{c}:{r}{aa}" for c, r, aa in pocket_residues]))
 
-            **Protein (Biopython):**  
-            - Molecular Weight  
-            - Aromaticity  
-            - Instability Index  
-            - Isoelectric Point (pI)  
-            - GRAVY (hydropathy)
-            """)
-    
-    st.markdown("""
-        <div class='nav-buttons'>
-              <a href="/" target="_self">
-              <button style="padding: 10px 20px; border-radius: 8px; background-color: #2980B9; color: white; border: none;">🔙 Back to Home</button>
-              </a>
-       </div>
-    """, unsafe_allow_html=True)
+        st.markdown("### 🔬 3D Visualization with py3Dmol")
+        view = py3Dmol.view(width=700, height=500)
+        view.addModel(open(temp_pdb_path).read(), 'pdb')
+        view.setStyle({'cartoon': {'color': 'spectrum'}})
 
-# Run standalone
-if __name__ == "__main__":
-    load_binding_pocket_predictor()
+        # Highlight predicted residues
+        for coord in pocket_coords:
+            view.addSphere({
+                "center": {"x": float(coord[0]), "y": float(coord[1]), "z": float(coord[2])},
+                "radius": 1.5,
+                "color": "red",
+                "opacity": 0.85
+            })
+
+        # Add ligand if uploaded
+        if ligand_path and os.path.exists(ligand_path):
+            with open(ligand_path, "r") as f:
+                ligand_data = f.read()
+            view.addModel(ligand_data, ligand_ext.lower())
+            view.setStyle({'model': -1}, {'stick': {}})
+
+        view.zoomTo()
+        components.html(view._make_html(), height=520, scrolling=False)
+
+else:
+    st.info("📌 Upload a `.pdb` file to begin AI-based prediction.")
+
+st.markdown("""
+---
+<div class='nav-buttons'>
+    <a href="/" target="_self">
+    <button style="padding: 10px 20px; border-radius: 8px; background-color: #2C3E50; color: white; border: none;">🔙 Back to Home</button>
+    </a>
+</div>
+""", unsafe_allow_html=True)

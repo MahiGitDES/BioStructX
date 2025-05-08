@@ -37,11 +37,15 @@ Mahesh leads the development and architecture of BioStructX with a vision to com
 st.markdown("""
 ### 🧑‍🏫 Mentorship & Acknowledgements
 
-Special thanks to:
-- **Dr. Kushagra Kashyap**, Assistant Professor, Department of Life Sciences, DES Pune University
-- All faculty and peers who provided constructive feedback during development
+We express our sincere gratitude to all who contributed to the development of BioStructX.
 
-Your encouragement and guidance were instrumental in refining BioStructX.
+Special thanks to:
+
+Dr. Kushagra Kashyap, Assistant Professor, Department of Life Sciences, DES Pune University, for his constant support, expert insights, and valuable encouragement throughout the project.
+
+All faculty members and peers, whose constructive feedback and suggestions greatly helped in refining various aspects of the platform.
+
+Your guidance and motivation were instrumental in shaping BioStructX into a useful resource for the bioinformatics community.
 """)
 
 # --- Section 3: Join Us ---
