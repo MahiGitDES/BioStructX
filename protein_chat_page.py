@@ -5,6 +5,7 @@ import streamlit as st
 import openai
 import os
 from dotenv import load_dotenv
+from together import Together
 
 # --- Load API key from .env in project root ---
 env_path = os.path.join(os.getcwd(), ".env")
@@ -18,6 +19,7 @@ if not api_key:
 
 #openai.api_key = api_key
 openai.api_key = os.getenv("OPENAI_API_KEY")
+client = Together() # auth defaults to os.environ.get("TOGETHER_API_KEY")
 # --- Main UI ---
 def load_protein_chat_page():
     st.markdown("<h1 style='text-align: center; color: #2E86C1;'>💬 Protein Chat Assistant</h1>", unsafe_allow_html=True)
@@ -50,9 +52,9 @@ def load_protein_chat_page():
     if st.button("💡 Ask AI") and query.strip():
         with st.spinner("Thinking..."):
             try:
-                model_name = "gpt-4" if use_gpt4 else "gpt-3.5-turbo"
+                model_name = "Qwen/Qwen3-235B-A22B-fp8-tput" #"gpt-4" if use_gpt4 else "gpt-3.5-turbo"
 
-                response = openai.chat.completions.create(
+                response = client.chat.completions.create(
                     model=model_name,
                     messages=[
                         {"role": "system", "content": "You are a helpful assistant specialized in protein bioinformatics and drug discovery."},
