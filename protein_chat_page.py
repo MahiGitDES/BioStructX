@@ -8,7 +8,7 @@ from openai import OpenAI
 
 # --- Load Environment Variables ---
 load_dotenv()
-client = OpenAI(api_key="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")
+client = os.getenv("OPENAI_API_KEY")
 
 
 def load_protein_chat_page():
