@@ -1,12 +1,53 @@
 import streamlit as st
 import os
 import numpy as np
-from Bio.PDB import PDBParser, DSSP
+from Bio.PDB import PDBParser
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 import py3Dmol
 import tempfile
+import requests
 import streamlit.components.v1 as components
+
+def extract_residue_features_via_api(pdb_path):
+    with open(pdb_path, "rb") as pdb_file:
+        files = {'file': ('structure.pdb', pdb_file, 'chemical/x-pdb')}
+        try:
+            response = requests.post("https://biostructx-dssp.onrender.com/predict", files=files)
+            response.raise_for_status()
+            dssp_data = response.json()
+
+            # Handle API-side error
+            if isinstance(dssp_data, dict) and "error" in dssp_data:
+                st.error(f"❌ DSSP API returned an error: {dssp_data['error']}")
+                return None, None, None
+
+            features, res_ids, atom_coords = [], [], []
+            parser = PDBParser(QUIET=True)
+            structure = parser.get_structure("prot", pdb_path)
+            model = structure[0]
+
+            for entry in dssp_data:
+                chain = entry["chain"]
+                resnum = entry["resnum"]
+                aa = entry["aa"]
+                asa = entry["asa"]
+                phi = entry["phi"]
+                psi = entry["psi"]
+                hydrophobic = 1 if aa in "AVILMFYW" else 0
+                features.append([asa, phi, psi, hydrophobic])
+                res_ids.append((chain, resnum, aa))
+
+                try:
+                    atom = model[chain][resnum]["CA"]
+                    atom_coords.append(atom.coord)
+                except:
+                    atom_coords.append(None)
+
+            return np.array(features), res_ids, atom_coords
+        except Exception as e:
+            st.error(f"❌ Failed to fetch DSSP from Render API: {e}")
+            return None, None, None
 
 def load_binding_pocket_predictor():
     st.title("🤖 AI-Based Binding Pocket Predictor")
@@ -16,7 +57,6 @@ def load_binding_pocket_predictor():
     - Visualize predicted residues and ligand in 3D with `py3Dmol`.
     """)
 
-    # Upload protein
     pdb_file = st.file_uploader("📁 Upload a Protein Structure (.pdb)", type=["pdb"])
     ligand_file = st.file_uploader("💊 Optional: Upload Ligand File (.mol2 or .sdf)", type=["mol2", "sdf"])
 
@@ -33,40 +73,6 @@ def load_binding_pocket_predictor():
         else:
             ligand_path = None
 
-        # Extract features
-        def extract_residue_features(pdb_path):
-            parser = PDBParser(QUIET=True)
-            structure = parser.get_structure("prot", pdb_path)
-            model = structure[0]
-
-            try:
-                dssp = DSSP(model, pdb_path)
-            except Exception as e:
-                st.error(f"❌ DSSP failed. Ensure DSSP is installed: {e}")
-                return None, None, None
-
-            features = []
-            res_ids = []
-            atom_coords = []
-            for key in dssp.keys():
-                res = dssp[key]
-                chain = key[0]
-                resnum = key[1]
-                aa = res[1]
-                asa = res[3]
-                phi = res[4]
-                psi = res[5]
-                hydrophobic = 1 if aa in "AVILMFYW" else 0
-                features.append([asa, phi, psi, hydrophobic])
-                res_ids.append((chain, resnum, aa))
-                try:
-                    atom = model[chain][resnum]['CA']
-                    atom_coords.append(atom.coord)
-                except:
-                    atom_coords.append(None)
-            return np.array(features), res_ids, atom_coords
-
-        # Simulated RF model
         def simulate_model():
             X_dummy = np.random.rand(100, 4)
             y_dummy = np.random.randint(0, 2, 100)
@@ -74,13 +80,11 @@ def load_binding_pocket_predictor():
             scaler = StandardScaler().fit(X_dummy)
             return model, scaler
 
-        # Predict and visualize
-        features, res_ids, coords = extract_residue_features(temp_pdb_path)
+        features, res_ids, coords = extract_residue_features_via_api(temp_pdb_path)
         if features is not None:
             model, scaler = simulate_model()
             predictions = model.predict(scaler.transform(features))
 
-            # Get predicted pocket residues and their coordinates
             pocket_residues = [res_ids[i] for i, pred in enumerate(predictions) if pred == 1]
             pocket_coords = [coords[i] for i, pred in enumerate(predictions) if pred == 1 and coords[i] is not None]
 
@@ -94,7 +98,6 @@ def load_binding_pocket_predictor():
             view.addModel(open(temp_pdb_path).read(), 'pdb')
             view.setStyle({'cartoon': {'color': 'spectrum'}})
 
-            # Highlight predicted residues
             for coord in pocket_coords:
                 view.addSphere({
                     "center": {"x": float(coord[0]), "y": float(coord[1]), "z": float(coord[2])},
@@ -103,7 +106,6 @@ def load_binding_pocket_predictor():
                     "opacity": 0.85
                 })
 
-            # Add ligand if uploaded
             if ligand_path and os.path.exists(ligand_path):
                 with open(ligand_path, "r") as f:
                     ligand_data = f.read()
@@ -125,6 +127,5 @@ def load_binding_pocket_predictor():
     </div>
     """, unsafe_allow_html=True)
 
-# Run directly
 if __name__ == "__main__":
     load_binding_pocket_predictor()

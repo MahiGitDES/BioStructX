@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from io import StringIO
 
 # RDKit API endpoint (replace if changed)
-RDKit_API_URL = "https://rdkit-api.onrender.com/fingerprint"
+RDKit_API_URL = "https://rdkit-api.onrender.com/compute"
 
 def load_ligand_similarity_clustering():
     st.title("🔗 Ligand Similarity Clustering & Visualization")
