@@ -2,8 +2,10 @@ import streamlit as st
 from typing import Optional
 import requests
 import pandas as pd
+import re
 
 def load_drug_gene_mapper():
+    st.set_page_config(page_title="Drug–Gene Mapper", layout="wide")
     st.title("🧠 Drug–Gene Mapper (BioStructX Module)")
 
     st.markdown("""
@@ -12,20 +14,38 @@ def load_drug_gene_mapper():
     """)
 
     user_input = st.text_input("🔍 Enter a Drug or Gene Name:")
-    
+
     st.markdown("""
         <div class='nav-buttons'>
               <a href="/" target="_self">
               <button style="padding: 10px 20px; border-radius: 8px; background-color: #2980B9; color: white; border: none;">🔙 Back to Home</button>
               </a>
-           </div>
+        </div>
         """, unsafe_allow_html=True)
 
-    def get_pubchem_properties(name):
+    def is_smiles(string):
+        return bool(re.match(r"^[A-Za-z0-9@+\-\[\]=#$().\\/]+$", string)) and "=" in string
+
+    def get_pubchem_properties_by_name(name):
         try:
             url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{name}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName/JSON"
             res = requests.get(url)
             return res.json()['PropertyTable']['Properties'][0]
+        except:
+            return None
+
+    def get_pubchem_properties_by_smiles(smiles):
+        try:
+            encoded = requests.utils.quote(smiles)
+            cid_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/{encoded}/cids/JSON"
+            cid_res = requests.get(cid_url)
+            cids = cid_res.json().get("IdentifierList", {}).get("CID", [])
+            if not cids:
+                return None
+            cid = cids[0]
+            prop_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName/JSON"
+            prop_res = requests.get(prop_url)
+            return prop_res.json()['PropertyTable']['Properties'][0]
         except:
             return None
 
@@ -108,14 +128,15 @@ def load_drug_gene_mapper():
 
     if user_input:
         st.subheader(f"Results for: `{user_input}`")
-
         st.markdown("### 💊 Drug Information (PubChem)")
-        props = get_pubchem_properties(user_input)
+
+        props = get_pubchem_properties_by_smiles(user_input) if is_smiles(user_input) else get_pubchem_properties_by_name(user_input)
+
         if props:
             st.write(props)
-            image_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{user_input}/PNG"
+            image_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{props['IUPACName']}/PNG"
             st.image(image_url, caption="Structure from PubChem", width=250)
-            st.markdown(f"[🔗 View on PubChem](https://pubchem.ncbi.nlm.nih.gov/#query={user_input})")
+            st.markdown(f"[🔗 View on PubChem](https://pubchem.ncbi.nlm.nih.gov/#query={props['IUPACName']})")
 
             st.markdown("### 🧬 Top 5 Similar Compounds (SMILES)")
             similar_props = get_pubchem_similars(props['CanonicalSMILES'])
