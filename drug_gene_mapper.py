@@ -49,7 +49,7 @@ def load_drug_gene_mapper():
 
     def get_rdkit_similars(query_smiles):
         try:
-            rdkit_api = "https://rdkit-api.onrender.com"  # ⬅️ Replace with your actual hosted RDKit API
+            rdkit_api = "https://rdkit-api.onrender.com/similarity"  # ⬅️ Replace with your actual hosted RDKit API
             compound_library = [
                 {"name": "Ibuprofen", "smiles": "CC(C)CC1=CC=C(C=C1)C(C)C(=O)O"},
                 {"name": "Paracetamol", "smiles": "CC(=O)NC1=CC=C(O)C=C1"},
