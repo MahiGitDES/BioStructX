@@ -129,16 +129,30 @@ def load_drug_gene_mapper():
             smiles = user_input
 
         st.markdown("### 🧬 Top 5 Similar Compounds")
-        similar_cids = get_pubchem_similars(smiles)
-        if similar_cids:
-            data = [(cid, get_pubchem_title(cid), get_pubchem_image(cid)) for cid in similar_cids]
-            df_sim = pd.DataFrame(data, columns=["CID", "Title", "Image URL"])
-            for _, row in df_sim.iterrows():
-                st.image(row["Image URL"], width=150)
-                st.write(f"🔹 **CID:** {row['CID']}, **Title:** {row['Title']}")
-                st.markdown(f"[View on PubChem](https://pubchem.ncbi.nlm.nih.gov/compound/{row['CID']})")
+        if smiles:
+            st.code(smiles, language='text')  # Show what SMILES was used
+            try:
+                # Test if SMILES is valid by checking if it maps to any CID
+                test_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/{quote(smiles)}/cids/JSON"
+                test_res = requests.get(test_url)
+                if test_res.status_code == 200 and 'IdentifierList' in test_res.json():
+                    similar_cids = get_pubchem_similars(smiles)
+                    if similar_cids:
+                        data = [(cid, get_pubchem_title(cid), get_pubchem_image(cid)) for cid in similar_cids]
+                        df_sim = pd.DataFrame(data, columns=["CID", "Title", "Image URL"])
+                        for _, row in df_sim.iterrows():
+                            st.image(row["Image URL"], width=150)
+                            st.write(f"🔹 **CID:** {row['CID']}, **Title:** {row['Title']}")
+                            st.markdown(f"[View on PubChem](https://pubchem.ncbi.nlm.nih.gov/compound/{row['CID']})")
+                    else:
+                        st.warning("⚠️ No similar compounds found. Try another drug name or a different canonical SMILES.")
+                else:
+                    st.warning("❌ Provided SMILES is not valid or not found in PubChem.")
+            except Exception as e:
+                st.error(f"🔧 Error during SMILES validation or similarity search: {e}")
         else:
-            st.warning("⚠️ No similar compounds found. Try another drug name or a valid canonical SMILES.")
+            st.warning("⚠️ No SMILES input available for similarity search.")
+
 
         st.markdown("### 🧬 Gene / Protein Information (UniProt)")
         gene_data = get_uniprot_entry(user_input)
