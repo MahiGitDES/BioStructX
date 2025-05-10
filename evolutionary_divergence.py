@@ -31,7 +31,7 @@ def run_clustalo_remote(sequences):
     submit_url = "https://www.ebi.ac.uk/Tools/services/rest/clustalo/run"
     params = {
         "sequence": fasta_str,
-        "email": "3522411039@despu.edu.in",
+        "email": "maheshtamhane1214@gmail.com",
         "outfmt": "fa",
         "guidetreeout": "true",
         "dealign": "true"
