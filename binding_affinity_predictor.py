@@ -84,7 +84,6 @@ def plot_binding_affinity(pred_energy):
 
 # -------------------------------
 def load_binding_affinity_predictor():
-    st.set_page_config(page_title="Binding Affinity Predictor", layout="wide")
     st.title("📈 Binding Affinity Predictor")
     st.markdown("""
     This tool predicts the **binding affinity** between a **ligand (SMILES)** and a **protein (sequence)**  
