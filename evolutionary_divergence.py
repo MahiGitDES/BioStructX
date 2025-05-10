@@ -5,7 +5,6 @@ from Bio import Phylo, SeqIO, AlignIO
 from Bio.PDB import PDBParser, Superimposer, PDBIO
 from io import StringIO
 import tempfile
-import subprocess
 import os
 import requests
 import py3Dmol
@@ -24,23 +23,42 @@ def fetch_fasta_from_uniprot(uniprot_ids):
             sequences.extend(seq_records)
     return sequences
 
-def run_clustalo_direct(sequences):
-    with tempfile.TemporaryDirectory() as tmpdir:
-        fasta_path = os.path.join(tmpdir, "input.fasta")
-        aln_path = os.path.join(tmpdir, "aligned.aln")
-        tree_path = os.path.join(tmpdir, "tree.dnd")
+def run_clustalo_remote(sequences):
+    fasta_str = ""
+    for i, seq in enumerate(sequences):
+        fasta_str += f">seq{i+1}\n{seq.seq}\n"
 
-        SeqIO.write(sequences, fasta_path, "fasta")
-        subprocess.run(["clustalo", "-i", fasta_path, "-o", aln_path,
-                        "--guidetree-out", tree_path, "--force", "--auto", "--full"], check=True)
+    submit_url = "https://www.ebi.ac.uk/Tools/services/rest/clustalo/run"
+    params = {
+        "sequence": fasta_str,
+        "email": "your_email@example.com",
+        "outfmt": "fa",
+        "guidetreeout": "true",
+        "dealign": "true"
+    }
 
-        alignment = AlignIO.read(aln_path, "fasta")
-        tree = None
-        try:
-            with open(tree_path) as f:
-                tree = Phylo.read(f, "newick")
-        except FileNotFoundError:
-            pass
+    response = requests.post(submit_url, data=params)
+    if response.status_code != 200:
+        raise Exception("❌ Clustal Omega submission failed.")
+
+    job_id = response.text.strip()
+    status_url = f"https://www.ebi.ac.uk/Tools/services/rest/clustalo/status/{job_id}"
+
+    import time
+    while True:
+        status = requests.get(status_url).text
+        if status == "FINISHED":
+            break
+        elif status == "ERROR":
+            raise Exception("❌ Clustal Omega job failed.")
+        time.sleep(3)
+
+    aln_url = f"https://www.ebi.ac.uk/Tools/services/rest/clustalo/result/{job_id}/aln-fasta"
+    tree_url = f"https://www.ebi.ac.uk/Tools/services/rest/clustalo/result/{job_id}/phylotree"
+
+    alignment = AlignIO.read(StringIO(requests.get(aln_url).text), "fasta")
+    tree = Phylo.read(StringIO(requests.get(tree_url).text), "newick")
+
     return alignment, tree
 
 def plot_phylo_tree(tree):
@@ -166,7 +184,7 @@ def load_evolutionary_module():
                 st.error("❌ No sequences found.")
                 return
 
-            alignment, tree = run_clustalo_direct(sequences)
+            alignment, tree = run_clustalo_remote(sequences)
 
             st.subheader("🧬 Multiple Sequence Alignment:")
             st.code("\n".join(str(rec.seq) for rec in alignment), language='text')
@@ -229,7 +247,7 @@ def load_evolutionary_module():
 
             avg_rmsd = np.nanmean(rmsd_matrix[np.triu_indices_from(rmsd_matrix, k=1)])
             st.success(f"✅ Average RMSD across structures: **{avg_rmsd:.3f} Å**")
-            
+
     st.markdown("""
         <div class='nav-buttons'>
               <a href="/" target="_self">
@@ -237,7 +255,6 @@ def load_evolutionary_module():
               </a>
        </div>
     """, unsafe_allow_html=True)
-
 
 # Entry point
 if __name__ == "__main__":
