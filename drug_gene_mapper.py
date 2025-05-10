@@ -7,7 +7,6 @@ import pandas as pd
 from urllib.parse import quote
 
 def load_drug_gene_mapper():
-    st.set_page_config(page_title="Drug–Gene Mapper", layout="wide")
     st.title("🧠 Drug–Gene Mapper (BioStructX Module)")
 
     st.markdown("""
