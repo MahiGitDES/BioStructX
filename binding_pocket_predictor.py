@@ -6,7 +6,6 @@ import py3Dmol
 # DSSP API endpoint
 DSSP_API_URL = "https://biostructx-dssp.onrender.com/dssp"
 
-st.set_page_config(page_title="Binding Pocket Predictor", layout="wide")
 st.title("🧬 Binding Pocket Predictor with DSSP")
 st.markdown("Upload a PDB file to analyze secondary structure and visualize the protein.")
 
