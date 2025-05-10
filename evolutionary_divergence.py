@@ -69,9 +69,13 @@ def run_clustalo_remote(sequences):
     return alignment, tree
 
 def plot_phylo_tree(tree):
+    import matplotlib
+    matplotlib.use("Agg")
+
     fig = plt.figure(figsize=(8, 6))
     ax = fig.add_subplot(1, 1, 1)
-    Phylo.draw(tree, do_show=False, axes=ax)
+    Phylo.draw(tree, axes=ax)
+    plt.tight_layout()
     return fig
 
 def fetch_domain_annotations(uniprot_id):
@@ -215,8 +219,18 @@ def load_evolutionary_module():
             st.download_button("📥 Download Mutation Report", mut_report, file_name="mutation_summary.txt")
 
             if tree:
-                st.subheader("🌳 Phylogenetic Tree")
-                st.pyplot(plot_phylo_tree(tree))
+                st.subheader("🌳 Phylogenetic Tree (Graphical)")
+                fig = plot_phylo_tree(tree)
+                st.pyplot(fig)
+
+                st.subheader("📄 Raw Newick Format:")
+                st.code(tree.format("newick"))
+
+                st.subheader("🧾 ASCII Tree (Fallback View)")
+                from io import StringIO as IO
+                ascii_buf = IO()
+                Phylo.draw_ascii(tree, file=ascii_buf)
+                st.text(ascii_buf.getvalue())
 
             if ids:
                 st.subheader("📌 Domain Annotations:")
