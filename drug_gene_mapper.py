@@ -1,10 +1,7 @@
-# src/drug_gene_mapper.py
-
 import streamlit as st
 from typing import Optional
 import requests
 import pandas as pd
-from urllib.parse import quote
 
 def load_drug_gene_mapper():
     st.title("🧠 Drug–Gene Mapper (BioStructX Module)")
@@ -15,7 +12,7 @@ def load_drug_gene_mapper():
     """)
 
     user_input = st.text_input("🔍 Enter a Drug or Gene Name:")
-
+    
     st.markdown("""
         <div class='nav-buttons'>
               <a href="/" target="_self">
@@ -29,35 +26,32 @@ def load_drug_gene_mapper():
             url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{name}/property/MolecularFormula,MolecularWeight,CanonicalSMILES,IUPACName/JSON"
             res = requests.get(url)
             return res.json()['PropertyTable']['Properties'][0]
-        except Exception as e:
-            print(f"[PubChem Properties Error] {e}")
+        except:
             return None
 
     def get_pubchem_similars(smiles, threshold=70):
         try:
-            if not smiles or len(smiles) < 5:
-                return []
-            encoded_smiles = quote(smiles)
-            url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/similarity/smiles/{encoded_smiles}/JSON?Threshold={threshold}&MaxRecords=5"
+            encoded_smiles = requests.utils.quote(smiles)
+            url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/similarity/smiles/{encoded_smiles}/cids/JSON?Threshold={threshold}&MaxRecords=5"
             res = requests.get(url)
-            if res.status_code == 200:
-                data = res.json()
-                return data.get('IdentifierList', {}).get('CID', [])
-            return []
+            res.raise_for_status()
+            cids = res.json().get('IdentifierList', {}).get('CID', [])
+            similar_props = []
+            for cid in cids:
+                prop_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/property/CanonicalSMILES,IUPACName/JSON"
+                prop_res = requests.get(prop_url)
+                prop_res.raise_for_status()
+                props = prop_res.json()['PropertyTable']['Properties'][0]
+                similar_props.append({
+                    "CID": cid,
+                    "Title": props.get("IUPACName", "N/A"),
+                    "SMILES": props.get("CanonicalSMILES", "N/A"),
+                    "ImageURL": f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/PNG"
+                })
+            return similar_props
         except Exception as e:
-            print(f"[Similarity Search Error] {e}")
+            print(f"Error fetching similar compounds: {e}")
             return []
-
-    def get_pubchem_title(cid):
-        try:
-            url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/description/JSON"
-            res = requests.get(url).json()
-            return res['InformationList']['Information'][0]['Title']
-        except:
-            return "N/A"
-
-    def get_pubchem_image(cid):
-        return f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/PNG"
 
     def get_uniprot_entry(gene):
         try:
@@ -117,42 +111,25 @@ def load_drug_gene_mapper():
 
         st.markdown("### 💊 Drug Information (PubChem)")
         props = get_pubchem_properties(user_input)
-        smiles = None
         if props:
-            smiles = props['CanonicalSMILES']
             st.write(props)
             image_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{user_input}/PNG"
             st.image(image_url, caption="Structure from PubChem", width=250)
             st.markdown(f"[🔗 View on PubChem](https://pubchem.ncbi.nlm.nih.gov/#query={user_input})")
-        else:
-            st.warning("❌ No drug found on PubChem. Trying input as SMILES...")
-            smiles = user_input
 
-        st.markdown("### 🧬 Top 5 Similar Compounds")
-        if smiles:
-            st.code(smiles, language='text')  # Show what SMILES was used
-            try:
-                # Test if SMILES is valid by checking if it maps to any CID
-                test_url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/{quote(smiles)}/cids/JSON"
-                test_res = requests.get(test_url)
-                if test_res.status_code == 200 and 'IdentifierList' in test_res.json():
-                    similar_cids = get_pubchem_similars(smiles)
-                    if similar_cids:
-                        data = [(cid, get_pubchem_title(cid), get_pubchem_image(cid)) for cid in similar_cids]
-                        df_sim = pd.DataFrame(data, columns=["CID", "Title", "Image URL"])
-                        for _, row in df_sim.iterrows():
-                            st.image(row["Image URL"], width=150)
-                            st.write(f"🔹 **CID:** {row['CID']}, **Title:** {row['Title']}")
-                            st.markdown(f"[View on PubChem](https://pubchem.ncbi.nlm.nih.gov/compound/{row['CID']})")
-                    else:
-                        st.warning("⚠️ No similar compounds found. Try another drug name or a different canonical SMILES.")
-                else:
-                    st.warning("❌ Provided SMILES is not valid or not found in PubChem.")
-            except Exception as e:
-                st.error(f"🔧 Error during SMILES validation or similarity search: {e}")
+            st.markdown("### 🧬 Top 5 Similar Compounds (SMILES)")
+            similar_props = get_pubchem_similars(props['CanonicalSMILES'])
+            if similar_props:
+                for compound in similar_props:
+                    st.image(compound['ImageURL'], width=150)
+                    st.write(f"🔹 **CID:** {compound['CID']}")
+                    st.write(f"🔹 **Title:** {compound['Title']}")
+                    st.write(f"🔹 **SMILES:** `{compound['SMILES']}`")
+                    st.markdown(f"[View on PubChem](https://pubchem.ncbi.nlm.nih.gov/compound/{compound['CID']})")
+            else:
+                st.warning("⚠️ No similar compounds found. Try another drug or use a canonical SMILES format.")
         else:
-            st.warning("⚠️ No SMILES input available for similarity search.")
-
+            st.warning("❌ No drug found on PubChem.")
 
         st.markdown("### 🧬 Gene / Protein Information (UniProt)")
         gene_data = get_uniprot_entry(user_input)
@@ -183,7 +160,6 @@ def load_drug_gene_mapper():
                 st.info("No disease data found for this protein. Try a reviewed UniProt ID like P00533.")
         else:
             st.warning("❌ Gene/Protein not found in UniProt.")
-
 
 # --- Entry point for standalone run ---
 if __name__ == "__main__":
